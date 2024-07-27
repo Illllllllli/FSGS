@@ -19,7 +19,7 @@ if os.name == 'nt':
     cxx_compiler_flags.append("/wd4624")
 
 setup(
-    name="simple-knn",
+    name="simple_knn",
     ext_modules=[
         CUDAExtension(
             name="simple-knn._C",

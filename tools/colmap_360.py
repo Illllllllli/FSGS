@@ -197,4 +197,4 @@ def pipeline(scene, base_path, n_views):
 
 
 for scene in ['bicycle', 'bonsai', 'counter', 'garden', 'kitchen', 'room', 'stump']:
-    pipeline(scene, base_path='D:/大三下/实验室/FSGS/dataset/360_v2/', n_views=24)  # please use absolute path!
+    pipeline(scene, base_path='D:/Labs/FSGS/dataset/360_v2/', n_views=24)  # please use absolute path!
