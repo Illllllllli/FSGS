@@ -25,7 +25,7 @@ setup(
             name="simple-knn._C",
             sources=[
             "spatial.cu", 
-            "simple-knn.cu",
+            "simple_knn.cu",
             "ext.cpp"],
             extra_compile_args={"nvcc": [], "cxx": cxx_compiler_flags})
         ],

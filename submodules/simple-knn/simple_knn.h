@@ -11,7 +11,7 @@
 
 #ifndef SIMPLEKNN_H_INCLUDED
 #define SIMPLEKNN_H_INCLUDED
-
+typedef signed int int32_t;
 class SimpleKNN
 {
 public:
