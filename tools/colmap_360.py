@@ -1,11 +1,11 @@
 import os
-import numpy as np
-import sys
 import sqlite3
+import sys
 
+import numpy as np
 
 IS_PYTHON3 = sys.version_info[0] >= 3
-MAX_IMAGE_ID = 2**31 - 1
+MAX_IMAGE_ID = 2 ** 31 - 1
 
 CREATE_CAMERAS_TABLE = """CREATE TABLE IF NOT EXISTS cameras (
     camera_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -85,11 +85,13 @@ def array_to_blob(array):
     else:
         return np.getbuffer(array)
 
+
 def blob_to_array(blob, dtype, shape=(-1,)):
     if IS_PYTHON3:
         return np.fromstring(blob, dtype=dtype).reshape(*shape)
     else:
         return np.frombuffer(blob, dtype=dtype).reshape(*shape)
+
 
 class COLMAPDatabase(sqlite3.Connection):
 
@@ -119,8 +121,9 @@ class COLMAPDatabase(sqlite3.Connection):
         params = np.asarray(params, np.float64)
         cursor = self.execute(
             "UPDATE cameras SET model=?, width=?, height=?, params=?, prior_focal_length=1 WHERE camera_id=?",
-            (model, width, height, array_to_blob(params),camera_id))
+            (model, width, height, array_to_blob(params), camera_id))
         return cursor.lastrowid
+
 
 def round_python3(number):
     rounded = round(number)
@@ -128,18 +131,18 @@ def round_python3(number):
         return 2.0 * round(number / 2.0)
     return rounded
 
+
 def pipeline(scene, base_path, n_views):
     llffhold = 8
     view_path = str(n_views) + '_views'
     os.chdir(base_path + scene)
-    os.system('rm -r ' + view_path)
+    os.system('rm -rf ' + view_path)
     os.mkdir(view_path)
     os.chdir(view_path)
     os.mkdir('created')
     os.mkdir('triangulated')
     os.mkdir('images')
     os.system('colmap model_converter  --input_path ../sparse/0/ --output_path ../sparse/0/  --output_type TXT')
-
 
     images = {}
     with open('../sparse/0/images.txt', "r") as fid:
@@ -161,9 +164,8 @@ def pipeline(scene, base_path, n_views):
     img_list = sorted(images.keys(), key=lambda x: x)
     train_img_list = [c for idx, c in enumerate(img_list) if idx % llffhold != 0]
     if n_views > 0:
-        idx_sub = [round_python3(i) for i in np.linspace(0, len(train_img_list)-1, n_views)]
+        idx_sub = [round_python3(i) for i in np.linspace(0, len(train_img_list) - 1, n_views)]
         train_img_list = [c for idx, c in enumerate(train_img_list) if idx in idx_sub]
-
 
     for img_name in train_img_list:
         os.system('cp ../images/' + img_name + '  images/' + img_name)
@@ -172,8 +174,10 @@ def pipeline(scene, base_path, n_views):
     with open('created/points3D.txt', "w") as fid:
         pass
 
-    res = os.popen( 'colmap feature_extractor --database_path database.db --image_path images  --SiftExtraction.max_image_size 4032 --SiftExtraction.max_num_features 16384 --SiftExtraction.estimate_affine_shape 1 --SiftExtraction.domain_size_pooling 1').read()
-    os.system( 'colmap exhaustive_matcher --database_path database.db --SiftMatching.guided_matching 1 --SiftMatching.max_num_matches 32768')
+    res = os.popen(
+        'colmap feature_extractor --database_path database.db --image_path images  --SiftExtraction.max_image_size 4032 --SiftExtraction.max_num_features 16384 --SiftExtraction.estimate_affine_shape 1 --SiftExtraction.domain_size_pooling 1').read()
+    os.system(
+        'colmap exhaustive_matcher --database_path database.db --SiftMatching.guided_matching 1 --SiftMatching.max_num_matches 32768')
     db = COLMAPDatabase.connect('database.db')
     db_images = db.execute("SELECT * FROM images")
     img_rank = [db_image[1] for db_image in db_images]
@@ -184,14 +188,13 @@ def pipeline(scene, base_path, n_views):
             data = [str(1 + idx)] + [' ' + item for item in images[os.path.basename(img_name)]] + ['\n\n']
             fid.writelines(data)
 
-    os.system('colmap point_triangulator --database_path database.db --image_path images --input_path created  --output_path triangulated  --Mapper.ba_local_max_num_iterations 40 --Mapper.ba_local_max_refinements 3 --Mapper.ba_global_max_num_iterations 100')
+    os.system(
+        'colmap point_triangulator --database_path database.db --image_path images --input_path created  --output_path triangulated  --Mapper.ba_local_max_num_iterations 40 --Mapper.ba_local_max_refinements 3 --Mapper.ba_global_max_num_iterations 100')
     os.system('colmap model_converter  --input_path triangulated --output_path triangulated  --output_type TXT')
     os.system('colmap image_undistorter --image_path images --input_path triangulated --output_path dense')
     os.system('colmap patch_match_stereo --workspace_path dense')
     os.system('colmap stereo_fusion --workspace_path dense --output_path dense/fused.ply')
 
 
-for scene in ['bicycle', 'bonsai', 'counter', 'garden',  'kitchen', 'room', 'stump']:
-    pipeline(scene, base_path = '/ssd1/zehao/FSGS/dataset/mipnerf360/', n_views = 24)  # please use absolute path!
-
-
+for scene in ['bicycle', 'bonsai', 'counter', 'garden', 'kitchen', 'room', 'stump']:
+    pipeline(scene, base_path='D:/大三下/实验室/FSGS/dataset/360_v2/', n_views=24)  # please use absolute path!
